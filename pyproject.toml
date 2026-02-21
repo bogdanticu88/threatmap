@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "threatmap"
+version = "1.0.0"
+description = "Static IaC threat modeler using STRIDE"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Bogdan Ticu", email = "bogdanticuoffice@gmail.com" }]
+requires-python = ">=3.9"
+keywords = [
+    "iac", "security", "threat-modeling", "stride",
+    "terraform", "cloudformation", "kubernetes", "devsecops",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    "python-hcl2>=4.3.0,<8.0",
+    "pyyaml>=6.0.1,<7.0",
+    "click>=8.1.0,<9.0",
+    "rich>=13.0.0,<15.0",
+    "jinja2>=3.1.0,<4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0,<9.0",
+    "pytest-cov>=4.1.0,<6.0",
+    "build>=1.0.0",
+    "twine>=5.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/bogdanticu88/threatmap"
+Repository = "https://github.com/bogdanticu88/threatmap"
+Issues = "https://github.com/bogdanticu88/threatmap/issues"
+
+[project.scripts]
+threatmap = "threatmap.cli:main"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
