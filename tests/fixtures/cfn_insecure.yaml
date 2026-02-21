@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Intentionally insecure CloudFormation stack — used for testing only
+
+Resources:
+  DataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: insecure-cfn-bucket
+      # No BucketEncryption
+      # No VersioningConfiguration
+      # No LoggingConfiguration
+      # No PublicAccessBlockConfiguration
+
+  OpenSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Dangerously open security group
+      VpcId: vpc-12345678
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: tcp
+          FromPort: 3389
+          ToPort: 3389
+          CidrIp: "0.0.0.0/0"
+        - IpProtocol: "-1"
+          FromPort: 0
+          ToPort: 0
+          CidrIp: "0.0.0.0/0"
+
+  AdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: insecure-admin-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: sts:AssumeRole
+
+  WildcardPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: wildcard-policy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "*"
+            Resource: "*"
+
+  MainDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: insecure-cfn-db
+      DBInstanceClass: db.t3.micro
+      Engine: mysql
+      MasterUsername: admin
+      MasterUserPassword: insecure123
+      PubliclyAccessible: true
+      StorageEncrypted: false
+      DeletionProtection: false
+      BackupRetentionPeriod: 0
+      AllocatedStorage: "20"
+
+  MainTrail:
+    Type: AWS::CloudTrail::Trail
+    Properties:
+      TrailName: insecure-cfn-trail
+      S3BucketName: !Ref DataBucket
+      IsLogging: true
+      IsMultiRegionTrail: false
+      EnableLogFileValidation: false
+
+  MainKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: Insecure KMS key
+      EnableKeyRotation: false
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:aws:iam::${AWS::AccountId}:root
+            Action: kms:*
+            Resource: "*"

@@ -1,0 +1,112 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: insecure-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insecure-api
+  namespace: insecure-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: insecure-api
+  template:
+    metadata:
+      labels:
+        app: insecure-api
+    spec:
+      hostNetwork: true
+      hostPID: true
+      # automountServiceAccountToken not set — defaults to true
+      containers:
+        - name: api
+          image: myapp:latest
+          securityContext:
+            privileged: true
+            runAsUser: 0
+            allowPrivilegeEscalation: true
+            readOnlyRootFilesystem: false
+            capabilities:
+              add:
+                - SYS_ADMIN
+                - NET_ADMIN
+          # No resources.limits
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: insecure-api-svc
+  namespace: insecure-app
+spec:
+  type: NodePort
+  selector:
+    app: insecure-api
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: insecure-ingress
+  namespace: insecure-app
+spec:
+  rules:
+    - host: api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: insecure-api-svc
+                port:
+                  number: 80
+  # No tls block
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: insecure-cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: insecure-app
+  - kind: User
+    name: system:unauthenticated
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: insecure-role
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: insecure-app
+data:
+  database_url: "mysql://admin:secret123@db.example.com/app"
+  api_key: "sk-prod-1234567890abcdef"
+  app_port: "8080"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: insecure-sa
+  namespace: insecure-app
+automountServiceAccountToken: true
