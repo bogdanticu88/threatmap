@@ -23,4 +23,4 @@ If the issue is confirmed, a patched release will be published and you will be c
 
 ## Scope
 
-This tool performs **static analysis only** — it makes no network calls and holds no credentials. The main attack surface is malicious IaC input files. Reports covering parser abuse (e.g. YAML bombs, malformed HCL causing excessive memory use) are in scope.
+This tool performs **static analysis only**  it makes no network calls and holds no credentials. The main attack surface is malicious IaC input files. Reports covering parser abuse (e.g. YAML bombs, malformed HCL causing excessive memory use) are in scope.
