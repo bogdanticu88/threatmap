@@ -9,6 +9,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+from threatmap import __version__
 from threatmap.analyzers import engine
 from threatmap.detect import detect_format
 from threatmap.models.resource import Resource
@@ -17,6 +18,21 @@ from threatmap.parsers import cloudformation, kubernetes, terraform
 from threatmap.reporters import json_reporter, markdown
 
 console = Console(stderr=True)
+
+_BANNER = r"""
+  _   _                    _
+ | |_| |__  _ __ ___  __ _| |_ _ __ ___   __ _ _ __
+ | __| '_ \| '__/ _ \/ _` | __| '_ ` _ \ / _` | '_ \
+ | |_| | | | | |  __/ (_| | |_| | | | | | (_| | |_) |
+  \__|_| |_|_|  \___|\__,_|\__|_| |_| |_|\__,_| .__/
+                                               |_|
+"""
+
+
+def _print_banner(no_color: bool = False) -> None:
+    c = Console(stderr=True, no_color=no_color)
+    c.print(f"[bold red]{_BANNER}[/bold red]")
+    c.print(f"  [dim]by Bogdan Ticu[/dim]   [dim]v{__version__}[/dim]\n")
 
 _SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
 _SEVERITY_COLORS = {
@@ -135,6 +151,7 @@ def scan(
 
     PATHS can be files or directories; multiple values accepted.
     """
+    _print_banner(no_color)
     stderr = Console(stderr=True, no_color=no_color)
     source_label = ", ".join(paths)
 
