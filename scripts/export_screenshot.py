@@ -9,21 +9,24 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from rich.console import Console
+from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
+from rich.rule import Rule
 
 # ── constants ────────────────────────────────────────────────────────────────
 WIDTH = 100
 OUTPUT = "threatmap_screenshot.svg"
 
-BANNER = r"""
-  _   _                    _
- | |_| |__  _ __ ___  __ _| |_ _ __ ___   __ _ _ __
- | __| '_ \| '__/ _ \/ _` | __| '_ ` _ \ / _` | '_ \
- | |_| | | | | |  __/ (_| | |_| | | | | | (_| | |_) |
-  \__|_| |_|_|  \___|\__,_|\__|_| |_| |_|\__,_| .__/
-                                               |_|
-"""
+# Block-letter banner — thick characters render cleanly in SVG monospace fonts
+BANNER = (
+    "  ████████╗██╗  ██╗██████╗ ███████╗ █████╗ ████████╗███╗   ███╗ █████╗ ██████╗ \n"
+    "     ██╔══╝██║  ██║██╔══██╗██╔════╝██╔══██╗╚══██╔══╝████╗ ████║██╔══██╗██╔══██╗\n"
+    "     ██║   ███████║██████╔╝█████╗  ███████║   ██║   ██╔████╔██║███████║██████╔╝ \n"
+    "     ██║   ██╔══██║██╔══██╗██╔══╝  ██╔══██║   ██║   ██║╚██╔╝██║██╔══██║██╔═══╝  \n"
+    "     ██║   ██║  ██║██║  ██║███████╗██║  ██║   ██║   ██║ ╚═╝ ██║██║  ██║██║      \n"
+    "     ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝   ╚═╝   ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝      "
+)
 
 THREATS = [
     ("T-001", "CRITICAL", "Elevation of Privilege",   "admin_role",         "IAM role trust policy allows Principal:* — any entity can assume this role."),
@@ -48,9 +51,13 @@ SEV_STYLE = {
 # ── build ─────────────────────────────────────────────────────────────────────
 c = Console(record=True, width=WIDTH)
 
-# Banner
-c.print(f"[bold red]{BANNER}[/bold red]")
-c.print("  [dim]by Bogdan Ticu[/dim]   [dim]v1.0.0[/dim]\n")
+# Banner — print line by line to avoid Rich markup stripping leading spaces
+for line in BANNER.splitlines():
+    t = Text(line, style="bold red")
+    c.print(t)
+c.print("")
+c.print(Text("  by Bogdan Ticu   v1.0.0", style="dim"))
+c.print("")
 
 # Simulated scan status lines
 c.print("[bold]$[/bold] threatmap scan ./infra/ --output report.md --fail-on HIGH\n")
