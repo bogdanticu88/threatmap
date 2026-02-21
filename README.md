@@ -1,6 +1,20 @@
 # threatmap
 
-Static IaC threat modeler that parses Terraform, CloudFormation, and Kubernetes manifests and produces a structured STRIDE threat model report with a data flow diagram. No network calls, no cloud credentials, fully offline.
+[![CI](https://github.com/bogdanticu88/threatmap/actions/workflows/ci.yml/badge.svg)](https://github.com/bogdanticu88/threatmap/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.9%20|%203.10%20|%203.11%20|%203.12-blue)](https://pypi.org/project/threatmap/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Offline](https://img.shields.io/badge/offline-no%20network%20calls-lightgrey)](https://github.com/bogdanticu88/threatmap)
+
+Static IaC threat modeler that parses Terraform, CloudFormation, and Kubernetes manifests and produces a structured STRIDE threat model report with a data flow diagram. No network calls, no cloud credentials — fully offline.
+
+---
+
+## Quick Start
+
+```bash
+pip install -e .
+threatmap scan ./examples --output report.md --fail-on HIGH
+```
 
 ---
 
