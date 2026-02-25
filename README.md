@@ -1,5 +1,5 @@
 # threatmap
-<img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/95d335c4-ef99-41e3-b708-2d3006a8a231" />
+
 
 [![CI](https://github.com/bogdanticu88/threatmap/actions/workflows/ci.yml/badge.svg)](https://github.com/bogdanticu88/threatmap/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.9%20|%203.10%20|%203.11%20|%203.12-blue)](https://pypi.org/project/threatmap/)
