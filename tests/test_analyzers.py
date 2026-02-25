@@ -111,6 +111,16 @@ class TestAWSAnalyzer:
         assert "server_side_encryption_configuration" in triggers
 
 
+    def test_s3_mfa_delete_rule(self):
+        from threatmap.parsers import terraform
+        resources = terraform.parse_file(os.path.join(FIXTURES, "s3_mfa_delete.tf"))
+        threats = self.analyzer.analyze(resources)
+        assert any(
+            t.trigger_property == "versioning.mfa_delete"
+            for t in threats
+        )
+
+
 # --------------------------------------------------------- Azure Analyzer
 class TestAzureAnalyzer:
     def setup_method(self):
