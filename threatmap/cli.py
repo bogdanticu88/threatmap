@@ -2,6 +2,7 @@
 threatmap CLI entry point.
 """
 import os
+import random
 import sys
 from typing import List, Optional, Tuple
 
@@ -32,7 +33,23 @@ _BANNER = r"""
 def _print_banner(no_color: bool = False) -> None:
     c = Console(stderr=True, no_color=no_color)
     c.print(f"[bold red]{_BANNER}[/bold red]")
-    c.print(f"  [dim]by Bogdan Ticu[/dim]   [dim]v{__version__}[/dim]\n")
+    c.print(f"  [dim]by Bogdan Ticu[/dim]   [dim]v{__version__}[/dim]")
+    
+    joke = random.choice(_JOKES)
+    c.print(f"  [italic cyan]\"{joke}\"[/italic cyan]\n")
+
+_JOKES = [
+    "A SQL query walks into a bar, walks up to two tables, and asks: 'Can I join you?'",
+    "Why do security researchers prefer dark mode? Because light attracts bugs.",
+    "The 'S' in IoT stands for Security.",
+    "STRIDE: Because 'winging it' isn't a security control.",
+    "If you think compliance is expensive, try a data breach.",
+    "Knock, knock. Who's there? (Long silence...) Java.",
+    "Encryption: Turning your secrets into someone else's headache.",
+    "My password is the last 8 digits of Pi.",
+    "Why did the attacker cross the road? To get to the other (server) side.",
+    "There are only 10 types of people: those who understand binary, and those who don't."
+]
 
 _SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"]
 _SEVERITY_COLORS = {
