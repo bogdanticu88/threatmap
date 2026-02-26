@@ -126,10 +126,14 @@ def _count_by_severity(threats: List[Threat]) -> dict:
     return {s.value: sum(1 for t in threats if t.severity == s) for s in Severity}
 
 
-@click.group(context_settings=dict(help_option_names=["-h", "--help"], no_args_is_help=True))
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(__version__)
-def cli():
+@click.pass_context
+def cli(ctx):
     """threatmap — static IaC threat modeler using STRIDE."""
+    if ctx.invoked_subcommand is None:
+        click.echo(ctx.get_help())
+        ctx.exit()
 
 
 @cli.command()
@@ -263,7 +267,7 @@ def scan(
 
 
 def main():
-    cli()
+    cli(obj={})
 
 
 if __name__ == "__main__":
