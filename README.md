@@ -17,7 +17,7 @@ Static IaC threat modeler that parses Terraform, CloudFormation, and Kubernetes 
 ## Quick Start
 
 ```bash
-pip install -e .
+pip install threatmap
 # Run as a command
 threatmap scan ./examples --output report.md --fail-on HIGH
 # Or as a module
@@ -38,14 +38,17 @@ python -m threatmap scan ./examples --ascii
 
 ## Install
 
+Install from PyPI:
+
 ```bash
-pip install -e .
+pip install threatmap
 ```
 
-Or from requirements:
+Or for local development:
 
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/bogdanticu88/threatmap.git
+cd threatmap
 pip install -e .
 ```
 
@@ -243,7 +246,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install threatmap
-        run: pip install -r requirements.txt && pip install -e .
+        run: pip install threatmap
 
       - name: Run threat model scan
         run: |
