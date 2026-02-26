@@ -110,6 +110,7 @@ def _count_by_severity(threats: List[Threat]) -> dict:
 
 
 @click.group()
+@click.version_option(__version__)
 def cli():
     """threatmap — static IaC threat modeler using STRIDE."""
 
