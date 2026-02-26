@@ -229,7 +229,19 @@ def analyze(resources: List[Resource]) -> List[Threat]:
                     "Enable versioning on the S3 bucket.",
                     "versioning",
                 ))
-
+            # AWS-023: versioning enabled but MFA Delete not configured
+            if isinstance(versioning, dict):
+                enabled = versioning.get("enabled") or versioning.get("Status", "")
+                if str(enabled).lower() in ("true", "enabled"):
+                    mfa_delete = versioning.get("mfa_delete") or versioning.get("MfaDelete", "")
+                    if str(mfa_delete).lower() not in ("true", "enabled"):
+                        threats.append(_make(
+                            "AWS-023", StrideCategory.TAMPERING,
+                            Severity.MEDIUM, r,
+                            f"S3 bucket '{r.name}' has versioning enabled but MFA Delete is not configured — object versions may be deleted by a compromised principal.",
+                            "Enable MFA Delete on the S3 bucket to protect against versioned object deletion.",
+                            "versioning.mfa_delete",
+                        ))
             # AWS-004: logging absent
             logging_block = p.get("logging") or p.get("LoggingConfiguration")
             if logging_block is None:
@@ -480,3 +492,19 @@ def analyze(resources: List[Resource]) -> List[Threat]:
                 ))
 
     return threats
+
+
+def check_s3_versioning(resource):
+    if resource.type != "aws_s3_bucket":
+        return None
+
+    versioning = resource.config.get("versioning")
+
+    if not versioning:
+        return Threat(
+            id="AWS-S3-VERSIONING",
+            severity="MEDIUM",
+            stride_category="Information Disclosure",
+            resource=resource.name,
+            description=f"S3 bucket '{resource.name}' does not have versioning enabled."
+        )
