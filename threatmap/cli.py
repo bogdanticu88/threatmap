@@ -132,7 +132,7 @@ def cli():
     """threatmap — static IaC threat modeler using STRIDE."""
 
 
-@cli.command(context_settings=dict(no_args_is_help=True))
+@cli.command()
 @click.argument("paths", nargs=-1, required=True, type=click.Path())
 @click.option(
     "--format", "output_format",
