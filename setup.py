@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="threatmap",
-    version="1.1.2",
+    version="1.1.3",
     description="Static IaC threat modeler using STRIDE",
     author="Bogdan Ticu",
     author_email="bogdanticuoffice@gmail.com",
