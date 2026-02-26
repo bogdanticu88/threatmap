@@ -1,0 +1,9 @@
+rules:
+  - resource_type: "aws_s3_bucket"
+    property: "force_destroy"
+    expected: false
+    stride: "Tampering"
+    severity: "MEDIUM"
+    description: "Production buckets should not have force_destroy enabled to prevent accidental data loss."
+    mitigation: "Set force_destroy = false."
+    remediation: "force_destroy = false"

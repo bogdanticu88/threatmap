@@ -30,6 +30,7 @@ class Threat:
     description: str
     mitigation: str
     trigger_property: Optional[str] = None
+    remediation: Optional[str] = None
 
     def to_dict(self) -> dict:
         return {
@@ -41,4 +42,5 @@ class Threat:
             "description": self.description,
             "mitigation": self.mitigation,
             "trigger_property": self.trigger_property,
+            "remediation": self.remediation,
         }

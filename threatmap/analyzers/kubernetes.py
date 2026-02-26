@@ -23,6 +23,7 @@ def _make(
     description: str,
     mitigation: str,
     trigger: Optional[str] = None,
+    remediation: Optional[str] = None,
 ) -> Threat:
     return Threat(
         threat_id="",
@@ -33,6 +34,7 @@ def _make(
         description=description,
         mitigation=mitigation,
         trigger_property=trigger,
+        remediation=remediation,
     )
 
 
@@ -115,6 +117,7 @@ def analyze(resources: List[Resource]) -> List[Threat]:
                         f"Container '{cname}' in {kind} '{r.name}' runs as privileged — full host kernel access.",
                         "Remove privileged: true. Use specific capabilities instead.",
                         f"spec.containers[{cname}].securityContext.privileged",
+                        "securityContext:\n  privileged: false"
                     ))
 
                 # K8S-004: running as root
@@ -127,6 +130,7 @@ def analyze(resources: List[Resource]) -> List[Threat]:
                         f"Container '{cname}' in {kind} '{r.name}' may run as root (no runAsNonRoot=true or runAsUser=0).",
                         "Set securityContext.runAsNonRoot = true and securityContext.runAsUser to a non-zero UID.",
                         f"spec.containers[{cname}].securityContext.runAsNonRoot",
+                        "securityContext:\n  runAsNonRoot: true\n  runAsUser: 1000"
                     ))
 
                 # K8S-005: no resource limits

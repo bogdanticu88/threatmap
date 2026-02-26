@@ -18,6 +18,7 @@ def _make(
     description: str,
     mitigation: str,
     trigger: Optional[str] = None,
+    remediation: Optional[str] = None,
 ) -> Threat:
     return Threat(
         threat_id="",
@@ -28,6 +29,7 @@ def _make(
         description=description,
         mitigation=mitigation,
         trigger_property=trigger,
+        remediation=remediation,
     )
 
 
@@ -88,6 +90,7 @@ def analyze(resources: List[Resource]) -> List[Threat]:
                     f"GCS bucket '{r.name}' does not have uniform bucket-level access enabled — legacy ACLs can bypass IAM policies.",
                     "Set uniform_bucket_level_access = true.",
                     "uniform_bucket_level_access",
+                    "uniform_bucket_level_access = true"
                 ))
 
             # GCP-002: public access prevention
@@ -99,6 +102,7 @@ def analyze(resources: List[Resource]) -> List[Threat]:
                     f"GCS bucket '{r.name}' does not enforce public access prevention — allUsers or allAuthenticatedUsers ACLs are possible.",
                     "Set public_access_prevention = \"enforced\".",
                     "public_access_prevention",
+                    "public_access_prevention = \"enforced\""
                 ))
 
             # GCP-003: logging

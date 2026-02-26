@@ -65,6 +65,13 @@ Scan multiple paths and write a JSON report to a file:
 threatmap scan ./terraform/ ./k8s/ ./cloudformation/ --format json --output report.json
 ```
 
+Generate an interactive HTML report or a SARIF report for GitHub Security:
+
+```bash
+threatmap scan ./infra/ --format html --output report.html
+threatmap scan ./infra/ --format sarif --output report.sarif
+```
+
 CI gate — exit code 1 if any CRITICAL or HIGH threat is found:
 
 ```bash
@@ -158,7 +165,29 @@ flowchart LR
 
 ---
 
-## How the Rules Work
+## Advanced Features (v1.1.0+)
+
+### Graph-based Attack Path Analysis
+`threatmap` now includes **Graph Intelligence** that traces relationships between resources. It automatically identifies "chained" threats where a compromise of one resource (e.g., an internet-exposed EC2) leads directly to another (e.g., a private S3 bucket), flagging these as **Elevation of Privilege** attack paths.
+
+### Custom YAML Rules
+You can define internal security requirements by creating a `threatmap_rules.yaml` in your project root.
+
+```yaml
+rules:
+  - resource_type: "aws_s3_bucket"
+    property: "force_destroy"
+    expected: false
+    stride: "Tampering"
+    severity: "MEDIUM"
+    description: "Production buckets should not have force_destroy enabled."
+    mitigation: "Set force_destroy = false."
+```
+
+### Remediation Hints
+Most findings now include a **remediation** field (visible in JSON, HTML, and SARIF reports) that provides the exact code snippet needed to fix the security issue.
+
+---
 
 ### Where rules live
 

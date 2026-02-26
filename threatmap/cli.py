@@ -15,7 +15,7 @@ from threatmap.detect import detect_format
 from threatmap.models.resource import Resource
 from threatmap.models.threat import Severity, Threat
 from threatmap.parsers import cloudformation, kubernetes, terraform
-from threatmap.reporters import json_reporter, markdown
+from threatmap.reporters import html_reporter, json_reporter, markdown, sarif_reporter
 
 console = Console(stderr=True)
 
@@ -118,7 +118,7 @@ def cli():
 @click.argument("paths", nargs=-1, required=True, type=click.Path())
 @click.option(
     "--format", "output_format",
-    type=click.Choice(["markdown", "json"], case_sensitive=False),
+    type=click.Choice(["markdown", "json", "sarif", "html"], case_sensitive=False),
     default="markdown",
     show_default=True,
     help="Output format.",
@@ -212,8 +212,13 @@ def scan(
 
     # 4. Generate report
     if not summary:
-        if output_format.lower() == "json":
+        fmt = output_format.lower()
+        if fmt == "json":
             report_content = json_reporter.build_report(resources, threats, source_label)
+        elif fmt == "sarif":
+            report_content = sarif_reporter.build_report(resources, threats, source_label)
+        elif fmt == "html":
+            report_content = html_reporter.build_report(resources, threats, source_label)
         else:
             report_content = markdown.build_report(resources, threats, source_label, ascii_mode=ascii)
 

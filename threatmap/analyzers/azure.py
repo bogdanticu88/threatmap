@@ -20,6 +20,7 @@ def _make(
     description: str,
     mitigation: str,
     trigger: Optional[str] = None,
+    remediation: Optional[str] = None,
 ) -> Threat:
     return Threat(
         threat_id="",
@@ -30,6 +31,7 @@ def _make(
         description=description,
         mitigation=mitigation,
         trigger_property=trigger,
+        remediation=remediation,
     )
 
 
@@ -81,6 +83,7 @@ def analyze(resources: List[Resource]) -> List[Threat]:
                     f"Storage account '{r.name}' allows public blob access — any unauthenticated user can read blob data.",
                     "Set allow_blob_public_access = false.",
                     "allow_blob_public_access",
+                    "allow_blob_public_access = false"
                 ))
 
             # AZ-002: TLS version
@@ -92,6 +95,7 @@ def analyze(resources: List[Resource]) -> List[Threat]:
                     f"Storage account '{r.name}' does not enforce TLS 1.2 — data in transit may be intercepted.",
                     "Set min_tls_version = \"TLS1_2\".",
                     "min_tls_version",
+                    "min_tls_version = \"TLS1_2\""
                 ))
 
             # AZ-003: HTTPS only
@@ -103,6 +107,7 @@ def analyze(resources: List[Resource]) -> List[Threat]:
                     f"Storage account '{r.name}' allows unencrypted HTTP traffic.",
                     "Set enable_https_traffic_only = true.",
                     "enable_https_traffic_only",
+                    "enable_https_traffic_only = true"
                 ))
 
             # AZ-004: network rules
