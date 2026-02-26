@@ -18,7 +18,10 @@ Static IaC threat modeler that parses Terraform, CloudFormation, and Kubernetes 
 
 ```bash
 pip install -e .
+# Run as a command
 threatmap scan ./examples --output report.md --fail-on HIGH
+# Or as a module
+python -m threatmap scan ./examples --ascii
 ```
 
 ---
@@ -72,6 +75,12 @@ Print a terminal summary table only, without writing a full report:
 
 ```bash
 threatmap scan ./infra/ --summary
+```
+
+Use ASCII-only severity indicators (no emojis) for environments that don't support Unicode:
+
+```bash
+threatmap scan ./infra/ --ascii --output report.md
 ```
 
 ---
