@@ -43,6 +43,14 @@ _SEVERITY_COLORS = {
     "INFO": "dim",
 }
 
+_SEVERITY_ASCII = {
+    "CRITICAL": "[CRITICAL]",
+    "HIGH": "[HIGH]",
+    "MEDIUM": "[MEDIUM]",
+    "LOW": "[LOW]",
+    "INFO": "[INFO]",
+}
+
 
 def _collect_files(paths: Tuple[str, ...]) -> List[str]:
     """Expand directories into file paths."""
@@ -74,20 +82,21 @@ def _parse_files(file_paths: List[str]) -> List[Resource]:
     return resources
 
 
-def _print_summary_table(threats: List[Threat], no_color: bool) -> None:
+def _print_summary_table(threats: List[Threat], no_color: bool, ascii_mode: bool = False) -> None:
     """Print a rich summary table to stderr."""
     tbl = Table(title="Threat Summary", show_header=True, header_style="bold")
     tbl.add_column("ID", style="dim", width=7)
-    tbl.add_column("Severity", width=10)
+    tbl.add_column("Severity", width=12 if ascii_mode else 10)
     tbl.add_column("STRIDE", width=25)
     tbl.add_column("Resource", width=30)
     tbl.add_column("Description")
 
     for t in threats:
         color = _SEVERITY_COLORS.get(t.severity.value, "") if not no_color else ""
+        sev_val = _SEVERITY_ASCII.get(t.severity.value, t.severity.value) if ascii_mode else t.severity.value
         tbl.add_row(
             t.threat_id,
-            f"[{color}]{t.severity.value}[/{color}]" if color else t.severity.value,
+            f"[{color}]{sev_val}[/{color}]" if color else sev_val,
             t.stride_category.value,
             t.resource_name,
             t.description[:80] + "…" if len(t.description) > 80 else t.description,
@@ -133,6 +142,12 @@ def cli():
     help="Print terminal summary table only, do not write a full report.",
 )
 @click.option(
+    "--ascii",
+    is_flag=True,
+    default=False,
+    help="Use ASCII-only severity indicators (no emojis).",
+)
+@click.option(
     "--no-color",
     is_flag=True,
     default=False,
@@ -144,6 +159,7 @@ def scan(
     output: Optional[str],
     fail_on: Optional[str],
     summary: bool,
+    ascii: bool,
     no_color: bool,
 ) -> None:
     """
@@ -192,17 +208,17 @@ def scan(
 
     # 3. Print terminal summary table when writing to file, or when --summary is requested
     if summary or output:
-        _print_summary_table(threats, no_color)
+        _print_summary_table(threats, no_color, ascii_mode=ascii)
 
     # 4. Generate report
     if not summary:
         if output_format.lower() == "json":
             report_content = json_reporter.build_report(resources, threats, source_label)
         else:
-            report_content = markdown.build_report(resources, threats, source_label)
+            report_content = markdown.build_report(resources, threats, source_label, ascii_mode=ascii)
 
         if output:
-            with open(output, "w") as fh:
+            with open(output, "w", encoding="utf-8", newline="\n") as fh:
                 fh.write(report_content)
             stderr.print(f"Report written to [bold]{output}[/bold]")
         else:

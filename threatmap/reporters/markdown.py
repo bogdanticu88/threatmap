@@ -19,6 +19,14 @@ _SEVERITY_EMOJI = {
     "INFO": "⚪",
 }
 
+_SEVERITY_ASCII = {
+    "CRITICAL": "[CRITICAL]",
+    "HIGH": "[HIGH]",
+    "MEDIUM": "[MEDIUM]",
+    "LOW": "[LOW]",
+    "INFO": "[INFO]",
+}
+
 _CATEGORY_MAP = {
     # Resource type prefix → subgraph label
     "aws_s3": "Data",
@@ -260,7 +268,7 @@ No CRITICAL or HIGH severity issues were detected. Review MEDIUM findings as cap
 
 | ID | Severity | STRIDE Category | Resource | Description |
 |----|----------|----------------|----------|-------------|
-{% for t in threats %}| {{ t.threat_id }} | {{ sev_icon[t.severity.value] }} {{ t.severity.value }} | {{ t.stride_category.value }} | `{{ t.resource_name }}` | {{ t.description }} |
+{% for t in threats %}| {{ t.threat_id }} | {{ sev_icon[t.severity.value] }}{% if not ascii_mode %} {{ t.severity.value }}{% endif %} | {{ t.stride_category.value }} | `{{ t.resource_name }}` | {{ t.description }} |
 {% endfor %}
 
 ---
@@ -287,7 +295,12 @@ No CRITICAL or HIGH severity issues were detected. Review MEDIUM findings as cap
 """
 
 
-def build_report(resources: List[Resource], threats: List[Threat], source_path: str) -> str:
+def build_report(
+    resources: List[Resource],
+    threats: List[Threat],
+    source_path: str,
+    ascii_mode: bool = False,
+) -> str:
     counts = _count_by_severity(threats)
     formats_seen = sorted({r.source_format for r in resources if r.source_format})
     formats_str = ", ".join(formats_seen) if formats_seen else "unknown"
@@ -306,6 +319,7 @@ def build_report(resources: List[Resource], threats: List[Threat], source_path: 
         counts=counts,
         resources=resources,
         threats=threats,
-        sev_icon=_SEVERITY_EMOJI,
+        sev_icon=_SEVERITY_ASCII if ascii_mode else _SEVERITY_EMOJI,
         mermaid=mermaid,
+        ascii_mode=ascii_mode,
     )
