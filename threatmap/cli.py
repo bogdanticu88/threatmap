@@ -132,6 +132,7 @@ def _count_by_severity(threats: List[Threat]) -> dict:
 def cli(ctx):
     """threatmap — static IaC threat modeler using STRIDE."""
     if ctx.invoked_subcommand is None:
+        _print_banner()
         click.echo(ctx.get_help())
         ctx.exit()
 
