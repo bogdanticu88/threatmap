@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="threatmap",
-    version="2.0.0",
+    version="2.1.0",
     description="Static IaC threat modeler using STRIDE, MITRE, and PASTA",
     author="Bogdan Ticu",
     author_email="bogdanticuoffice@gmail.com",
@@ -16,6 +16,10 @@ setup(
         "click>=8.1.0",
         "rich>=13.0.0",
         "jinja2>=3.1.0",
+        "fastapi>=0.104.0,<1.0",
+        "uvicorn>=0.24.0,<1.0",
+        "python-multipart>=0.0.6,<1.0",
+        "strawberry-graphql[fastapi]>=0.220.0,<1.0",
     ],
     extras_require={
         "dev": [
