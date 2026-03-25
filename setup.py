@@ -19,7 +19,7 @@ setup(
         "fastapi>=0.104.0,<1.0",
         "uvicorn>=0.24.0,<1.0",
         "python-multipart>=0.0.6,<1.0",
-        "strawberry-graphql[fastapi]>=0.220.0,<1.0",
+        "strawberry-graphql[fastapi]>=0.233.0,<1.0",
     ],
     extras_require={
         "dev": [
