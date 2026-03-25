@@ -1,4 +1,5 @@
 """FastAPI service for threatmap threat analysis."""
+import os
 import tempfile
 from typing import List, Optional
 
@@ -6,8 +7,9 @@ from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 from threatmap import __version__
-from threatmap.analyzers import engine
+from threatmap.analyzers import engine, mitre as mitre_analyzer, pasta as pasta_analyzer
 from threatmap.detect import detect_format
+from threatmap.graphql import graphql_router
 from threatmap.parsers import cloudformation, kubernetes, terraform
 from threatmap.reporters import json_reporter
 
@@ -17,18 +19,41 @@ app = FastAPI(
     version=__version__
 )
 
+# Mount GraphQL router
+app.include_router(graphql_router, prefix="/graphql")
+
 
 class AnalysisRequest(BaseModel):
     """Request body for threat analysis."""
+
     content: str
     filename: str
     framework: str = "stride"
 
 
+class MitreTtpResponse(BaseModel):
+    """MITRE ATT&CK tactic and technique."""
+
+    tactic: str
+    technique_id: str
+    technique_name: str
+
+
+class PastaThreatResponse(BaseModel):
+    """PASTA framework threat context."""
+
+    element: str
+    actor_type: Optional[str] = None
+    asset_type: Optional[str] = None
+    scenario: Optional[str] = None
+
+
 class ThreatResponse(BaseModel):
     """Threat analysis result."""
+
     threat_id: str
     framework: str
+    stride_category: str
     severity: str
     resource_name: str
     resource_type: str
@@ -36,10 +61,13 @@ class ThreatResponse(BaseModel):
     mitigation: str
     trigger_property: Optional[str] = None
     remediation: Optional[str] = None
+    mitre_ttps: Optional[List[MitreTtpResponse]] = None
+    pasta_threat: Optional[PastaThreatResponse] = None
 
 
 class AnalysisResponse(BaseModel):
     """Analysis response containing threats and metadata."""
+
     framework: str
     threat_count: int
     threats: List[ThreatResponse]
@@ -62,8 +90,9 @@ async def get_rules():
     """Get available frameworks and rule count."""
     return {
         "frameworks": ["stride", "mitre", "pasta"],
-        "stride_rules": 73,
-        "note": "MITRE and PASTA rules coming in v2.0.1"
+        "mitre_rules": mitre_analyzer.RULE_COUNT,
+        "pasta_rules": pasta_analyzer.RULE_COUNT,
+        "stride_note": "STRIDE rules are cloud-provider specific (aws, azure, gcp, kubernetes)",
     }
 
 
@@ -107,13 +136,32 @@ async def analyze(request: AnalysisRequest):
             ThreatResponse(
                 threat_id=t.threat_id,
                 framework=request.framework,
+                stride_category=t.stride_category.value,
                 severity=t.severity.value,
                 resource_name=t.resource_name,
                 resource_type=t.resource_type,
                 description=t.description,
                 mitigation=t.mitigation,
                 trigger_property=t.trigger_property,
-                remediation=t.remediation
+                remediation=t.remediation,
+                mitre_ttps=[
+                    MitreTtpResponse(
+                        tactic=ttp.tactic.value,
+                        technique_id=ttp.technique_id,
+                        technique_name=ttp.technique_name,
+                    )
+                    for ttp in t.mitre_ttps
+                ]
+                if t.mitre_ttps
+                else None,
+                pasta_threat=PastaThreatResponse(
+                    element=t.pasta_threat.element.value,
+                    actor_type=t.pasta_threat.actor_type,
+                    asset_type=t.pasta_threat.asset_type,
+                    scenario=t.pasta_threat.scenario,
+                )
+                if t.pasta_threat
+                else None,
             )
             for t in threats
         ]
