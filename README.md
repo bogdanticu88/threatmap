@@ -24,15 +24,23 @@ threatmap scan ./examples --output report.md --fail-on HIGH
 
 **Docker:**
 ```bash
-docker run -v $(pwd):/workspace threatmap:2.0.0 threatmap scan /workspace --output /workspace/report.md
+docker run -v $(pwd):/workspace bogdynn/threatmap:2.1.0 threatmap scan /workspace --output /workspace/report.md
 ```
 
-**API Server:**
+**REST API Server:**
 ```bash
 threatmap serve --host 0.0.0.0 --port 8000
 # Or via Docker:
-docker run -p 8000:8000 threatmap:2.0.0
-# Then POST to http://localhost:8000/analyze with IaC content
+docker run -p 8000:8000 bogdynn/threatmap:2.1.0
+# API endpoints: /health, /version, /rules, /analyze
+```
+
+**GraphQL API:**
+```bash
+docker run -p 8000:8000 bogdynn/threatmap:2.1.0
+# GraphQL endpoint: http://localhost:8000/graphql
+# Queries: health, version, rules
+# Mutations: analyze(content, filename, framework)
 ```
 
 ---
@@ -121,21 +129,24 @@ threatmap scan ./infra/ --framework pasta --format json
 
 ## Threat Modeling Frameworks
 
-**STRIDE** (default)
+**STRIDE** (73 rules)
 - Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege
 - Threat-centric approach ideal for identifying attack surface
+- Provider-specific: AWS (22 rules), Azure (19 rules), GCP (15 rules), Kubernetes (17 rules)
 - Best for: Traditional threat modeling, security architecture reviews
 
-**MITRE ATT&CK**
+**MITRE ATT&CK** (11 rules, 14 tactics)
 - Maps infrastructure threats to real-world adversary tactics and techniques
-- Includes 14 tactics (Reconnaissance, Initial Access, Persistence, etc.)
-- Best for: Aligning with threat intelligence, incident response planning
+- Resource-aware technique selection for accurate TTP mapping
+- Tactics: Reconnaissance, Initial Access, Execution, Persistence, Privilege Escalation, Defense Evasion, Credential Access, Discovery, Collection, Command & Control, Exfiltration, Impact, Lateral Movement
+- Best for: Aligning with threat intelligence, incident response planning, red team exercises
 
-**PASTA**
+**PASTA** (12 rules, asset-centric)
 - Process for Attack Simulation and Threat Analysis
 - Asset-centric approach focusing on what needs protection
-- Classifies assets by type (data, identity, compute, network)
-- Best for: Risk-based prioritization, asset protection strategies
+- Asset types: Data, Identity, Compute, Network, Infrastructure
+- Threat actors: Internal, External, Misconfiguration, Supply Chain
+- Best for: Risk-based prioritization, asset protection strategies, supply chain threats
 
 ---
 
@@ -212,7 +223,7 @@ flowchart LR
 
 ---
 
-## Advanced Features (v1.1.0+)
+## Advanced Features (v2.1.0+)
 
 ### Graph-based Attack Path Analysis
 `threatmap` now includes **Graph Intelligence** that traces relationships between resources. It automatically identifies "chained" threats where a compromise of one resource (e.g., an internet-exposed EC2) leads directly to another (e.g., a private S3 bucket), flagging these as **Elevation of Privilege** attack paths.
@@ -236,10 +247,9 @@ Most findings now include a **remediation** field (visible in JSON, HTML, and SA
 
 ---
 
-### Where rules live
+### Architecture
 
-Each cloud provider has its own analyzer module:
-
+**STRIDE Analyzer** — Provider-specific threat rules:
 ```
 threatmap/analyzers/
 ├── aws.py         # 22 rules — S3, IAM, EC2, RDS, EKS, CloudTrail, KMS, Lambda
@@ -247,6 +257,20 @@ threatmap/analyzers/
 ├── gcp.py         # 15 rules — GCS, Firewall, Compute, Cloud SQL, GKE, IAM, KMS
 └── kubernetes.py  # 17 rules — workloads, RBAC, network, secrets
 ```
+
+**MITRE ATT&CK Analyzer** — 11 rules mapped to MITRE tactics:
+- Resource-aware technique selection
+- Supports: IAM, Storage, Network, Compute, Kubernetes, Databases
+- Provides tactic→technique mapping for threat intelligence alignment
+
+**PASTA Analyzer** — 12 rules with asset-centric focus:
+- Classifies resources by asset type (data, identity, compute, network, infrastructure)
+- Identifies threat actors (internal, external, misconfiguration, supply chain)
+- Assigns attack scenarios for each threat
+
+**APIs:**
+- REST API: `/health`, `/version`, `/rules`, `/analyze`, `/analyze/file`
+- GraphQL API: `/graphql` with Query (health, version, rules) and Mutation (analyze)
 
 Each rule is a function that receives a `Resource` object (normalised from whatever source format was parsed) and returns a `Threat` if the condition is met. Rules are plain Python conditionals — no DSL, no regex engine, no external ruleset files.
 

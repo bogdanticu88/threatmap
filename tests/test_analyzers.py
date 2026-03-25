@@ -342,3 +342,291 @@ class TestCIBehavior:
         assert "threats" in data
         assert "resources" in data
         assert "summary" in data
+
+
+# --------------------------------------------------------- MITRE ATT&CK Tests
+class TestMitreAnalyzer:
+    """Test MITRE ATT&CK framework analyzer."""
+
+    def setup_method(self):
+        from threatmap.analyzers import mitre
+        self.analyzer = mitre
+
+    def test_iam_no_mfa_detected(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="aws",
+            resource_type="aws_iam_user",
+            name="no_mfa_user",
+            properties={"mfa_enabled": False},
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        assert any(t.trigger_property == "mfa_enabled" for t in threats)
+
+    def test_public_s3_exfiltration_detected(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="aws",
+            resource_type="aws_s3_bucket",
+            name="public_bucket",
+            properties={"public_access_block": None},
+            exposure="public",
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        assert any(t.trigger_property == "public_access_block" for t in threats)
+
+    def test_no_logging_defense_evasion_detected(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="aws",
+            resource_type="aws_cloudtrail",
+            name="trail",
+            properties={"enable_log_file_validation": False},
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        assert any(t.trigger_property == "logging_enabled" for t in threats)
+
+    def test_iam_wildcard_persistence_detected(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="aws",
+            resource_type="aws_iam_policy",
+            name="wild_policy",
+            properties={"policy.wildcard": True},
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        assert any(t.trigger_property == "policy.wildcard" for t in threats)
+
+    def test_container_as_root_priv_esc_detected(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="kubernetes",
+            resource_type="Deployment",
+            name="root_deploy",
+            properties={"run_as_user": 0},
+            source_format="kubernetes",
+        )
+        threats = self.analyzer.analyze([r])
+        assert any(t.trigger_property == "run_as_user" for t in threats)
+
+    def test_unencrypted_storage_collection_detected(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="aws",
+            resource_type="aws_ebs_volume",
+            name="unenc_vol",
+            properties={"encrypted": False},
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        assert any(t.trigger_property == "encrypted" for t in threats)
+
+    def test_mitre_ttps_populated(self):
+        """All MITRE threats must carry at least one TTP."""
+        resources = _parse_aws()
+        threats = self.analyzer.analyze(resources)
+        assert len(threats) >= 1
+        for t in threats:
+            assert t.mitre_ttps is not None and len(t.mitre_ttps) > 0
+
+    def test_resource_type_aware_ttps(self):
+        """Public exposure on S3 should include T1530 from resource-type lookup."""
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="aws",
+            resource_type="aws_s3_bucket",
+            name="pub",
+            properties={},
+            exposure="public",
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        all_technique_ids = [
+            ttp.technique_id
+            for t in threats
+            for ttp in (t.mitre_ttps or [])
+        ]
+        assert "T1530" in all_technique_ids
+
+
+# --------------------------------------------------------- PASTA Framework Tests
+class TestPastaAnalyzer:
+    """Test PASTA framework analyzer."""
+
+    def setup_method(self):
+        from threatmap.analyzers import pasta
+        self.analyzer = pasta
+
+    def test_supply_chain_actor_for_container(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="kubernetes",
+            resource_type="Deployment",
+            name="api",
+            properties={},
+            source_format="kubernetes",
+        )
+        from threatmap.analyzers.pasta import _determine_threat_actor
+        assert _determine_threat_actor(r) == "supply_chain"
+
+    def test_misconfiguration_actor_for_storage(self):
+        from threatmap.models.resource import Resource
+        from threatmap.analyzers.pasta import _determine_threat_actor
+        r = Resource(
+            provider="aws",
+            resource_type="aws_s3_bucket",
+            name="bucket",
+            properties={},
+            exposure="unknown",
+            source_format="terraform",
+        )
+        assert _determine_threat_actor(r) == "misconfiguration"
+
+    def test_external_actor_for_public_resource(self):
+        from threatmap.models.resource import Resource
+        from threatmap.analyzers.pasta import _determine_threat_actor
+        r = Resource(
+            provider="aws",
+            resource_type="aws_rds_instance",
+            name="db",
+            properties={},
+            exposure="public",
+            source_format="terraform",
+        )
+        assert _determine_threat_actor(r) == "external"
+
+    def test_pasta_element_asset_for_public_data(self):
+        from threatmap.models.resource import Resource
+        from threatmap.models.threat import PastaElement
+        r = Resource(
+            provider="aws",
+            resource_type="aws_s3_bucket",
+            name="public_bucket",
+            properties={"encrypted": False},
+            exposure="public",
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        asset_threats = [
+            t for t in threats
+            if t.pasta_threat and t.pasta_threat.element == PastaElement.ASSET.value
+        ]
+        assert len(asset_threats) > 0
+
+    def test_pasta_element_vulnerability_for_misconfiguration(self):
+        from threatmap.models.resource import Resource
+        from threatmap.models.threat import PastaElement
+        r = Resource(
+            provider="aws",
+            resource_type="aws_iam_user",
+            name="no_mfa",
+            properties={"mfa_enabled": False},
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        vuln_threats = [
+            t for t in threats
+            if t.pasta_threat and t.pasta_threat.element == PastaElement.VULNERABILITY.value
+        ]
+        assert len(vuln_threats) > 0
+
+    def test_service_disruption_scenario(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="aws",
+            resource_type="aws_cloudtrail",
+            name="trail",
+            properties={"logging_enabled": False},
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        scenarios = [t.pasta_threat.scenario for t in threats if t.pasta_threat]
+        assert "service_disruption" in scenarios
+
+    def test_infrastructure_asset_type_rules_fire(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="aws",
+            resource_type="aws_cloudtrail",
+            name="trail",
+            properties={"enable_log_file_validation": False},
+            source_format="terraform",
+        )
+        threats = self.analyzer.analyze([r])
+        assert len(threats) >= 1
+
+    def test_network_policy_missing_detected(self):
+        from threatmap.models.resource import Resource
+        r = Resource(
+            provider="kubernetes",
+            resource_type="Namespace",
+            name="insecure-ns",
+            properties={"has_network_policy": False},
+            source_format="kubernetes",
+        )
+        threats = self.analyzer.analyze([r])
+        assert any(t.trigger_property == "NetworkPolicy.missing" for t in threats)
+
+    def test_minimum_rule_count(self):
+        resources = _parse_all_fixtures()
+        threats = self.analyzer.analyze(resources)
+        assert len(threats) >= 3
+
+
+# --------------------------------------------------------- GraphQL API Tests
+class TestGraphQL:
+    """Integration tests for the GraphQL endpoint."""
+
+    def setup_method(self):
+        from fastapi.testclient import TestClient
+        from threatmap.api import app
+        self.client = TestClient(app)
+
+    def test_health_query(self):
+        response = self.client.post(
+            "/graphql",
+            json={"query": "{ health }"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["data"]["health"] == "ok"
+
+    def test_version_query(self):
+        from threatmap import __version__
+        response = self.client.post(
+            "/graphql",
+            json={"query": "{ version }"},
+        )
+        assert response.status_code == 200
+        assert response.json()["data"]["version"] == __version__
+
+    def test_rules_query(self):
+        response = self.client.post(
+            "/graphql",
+            json={"query": "{ rules }"},
+        )
+        assert response.status_code == 200
+        rules = response.json()["data"]["rules"]
+        assert "frameworks" in rules
+
+    def test_analyze_mutation_stride(self):
+        tf_content = 'resource "aws_s3_bucket" "b" { bucket = "test" }'
+        query = f'mutation {{ analyze(content: "{tf_content.replace('"', '\\"')}", filename: "test.tf", framework: "stride") {{ framework threatCount threats {{ threatId }} }} }}'
+        response = self.client.post("/graphql", json={"query": query})
+        assert response.status_code == 200
+
+    def test_rest_threat_response_includes_stride_category(self):
+        """Confirm REST endpoint also returns stride_category after fix."""
+        tf_content = 'resource "aws_s3_bucket" "b" { bucket = "test" }'
+        response = self.client.post(
+            "/analyze",
+            json={"content": tf_content, "filename": "test.tf", "framework": "stride"}
+        )
+        assert response.status_code == 200
+        threats = response.json()["threats"]
+        if threats:
+            assert "stride_category" in threats[0]
