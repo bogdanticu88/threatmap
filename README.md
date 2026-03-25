@@ -1,9 +1,6 @@
 ```
-<div align="center">
-  <img src="https://github.com/bogdanticu88/threatmap/raw/main/logo.png" alt="ThreatMap Logo" width="520" />
-  <h1>ThreatMap</h1>
-  <p><strong>Static IaC Threat Modeler</strong> — STRIDE • MITRE ATT&CK • PASTA</p>
-</div>
+![logo](https://github.com/user-attachments/assets/b27a7796-2c47-4ce3-9147-c1ae41d5601a)
+
 ```
 
 # threatmap
