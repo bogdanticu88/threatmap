@@ -3,11 +3,19 @@ from typing import Dict, List, Optional
 
 import yaml
 
-from threatmap.analyzers import aws, azure, gcp, kubernetes
+from threatmap.analyzers import aws, azure, gcp, kubernetes, mitre, pasta
 from threatmap.models.resource import Resource
 from threatmap.models.threat import Severity, StrideCategory, Threat
 
-ANALYZERS = [aws.analyze, azure.analyze, gcp.analyze, kubernetes.analyze]
+# STRIDE framework analyzers (default)
+STRIDE_ANALYZERS = [aws.analyze, azure.analyze, gcp.analyze, kubernetes.analyze]
+
+# Framework-specific analyzers
+FRAMEWORK_ANALYZERS = {
+    "stride": STRIDE_ANALYZERS,
+    "mitre": [mitre.analyze],
+    "pasta": [pasta.analyze],
+}
 
 _SEVERITY_ORDER = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
 
@@ -87,40 +95,43 @@ def _analyze_attack_paths(resources: List[Resource]) -> List[Threat]:
 
 def run(resources: List[Resource], framework: str = "stride") -> List[Threat]:
     """
-    Run all analyzers, custom rules, and graph analysis.
+    Run analyzers for selected threat modeling framework.
     Assign sequential threat IDs and sort by severity.
 
     Args:
         resources: List of infrastructure resources to analyze
         framework: Threat modeling framework (stride, mitre, pasta)
     """
+    framework = framework.lower()
     if framework not in ["stride", "mitre", "pasta"]:
         raise ValueError(f"Invalid framework: {framework}. Use stride, mitre, or pasta.")
 
     all_threats: List[Threat] = []
     seen = set()
 
-    # 1. Built-in Analyzers (currently STRIDE only)
-    for fn in ANALYZERS:
+    # 1. Framework-specific Analyzers
+    analyzers = FRAMEWORK_ANALYZERS.get(framework, STRIDE_ANALYZERS)
+    for fn in analyzers:
         for t in fn(resources):
-            key = (t.stride_category, t.resource_name, t.trigger_property)
+            key = (t.resource_name, t.trigger_property, t.description[:50])
             if key not in seen:
                 seen.add(key)
                 all_threats.append(t)
 
-    # 2. Custom Rules
-    for t in _run_custom_rules(resources):
-        key = (t.stride_category, t.resource_name, t.trigger_property)
-        if key not in seen:
-            seen.add(key)
-            all_threats.append(t)
+    # 2. Custom Rules (only for STRIDE framework)
+    if framework == "stride":
+        for t in _run_custom_rules(resources):
+            key = (t.resource_name, t.trigger_property, t.description[:50])
+            if key not in seen:
+                seen.add(key)
+                all_threats.append(t)
 
-    # 3. Graph/Attack Path Analysis
-    for t in _analyze_attack_paths(resources):
-        key = (t.stride_category, t.resource_name, t.trigger_property)
-        if key not in seen:
-            seen.add(key)
-            all_threats.append(t)
+        # 3. Graph/Attack Path Analysis (only for STRIDE)
+        for t in _analyze_attack_paths(resources):
+            key = (t.resource_name, t.trigger_property, t.description[:50])
+            if key not in seen:
+                seen.add(key)
+                all_threats.append(t)
 
     all_threats.sort(
         key=lambda t: (
