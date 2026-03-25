@@ -1,7 +1,8 @@
-```
-![logo](https://github.com/user-attachments/assets/b27a7796-2c47-4ce3-9147-c1ae41d5601a)
 
-```
+
+![logo](https://github.com/user-attachments/assets/4d3d1827-77ad-4893-827d-59ed8a806ba6)
+
+
 
 # threatmap
 
