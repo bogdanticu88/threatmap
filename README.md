@@ -4,9 +4,16 @@
 
 
 [![CI](https://github.com/bogdanticu88/threatmap/actions/workflows/ci.yml/badge.svg)](https://github.com/bogdanticu88/threatmap/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-2.1.0-brightgreen)](https://github.com/bogdanticu88/threatmap/releases/tag/v2.1.0)
+[![PyPI](https://img.shields.io/pypi/v/threatmap.svg)](https://pypi.org/project/threatmap/)
 [![Python](https://img.shields.io/badge/python-3.9%20|%203.10%20|%203.11%20|%203.12-blue)](https://pypi.org/project/threatmap/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Offline](https://img.shields.io/badge/offline-no%20network%20calls-lightgrey)](https://github.com/bogdanticu88/threatmap)
+[![Docker](https://img.shields.io/badge/docker-bogdynn%2Fthreatmap-0db7ed?logo=docker&logoColor=white)](https://hub.docker.com/r/bogdynn/threatmap)
+[![STRIDE](https://img.shields.io/badge/STRIDE-73%20rules-ff9800)](https://github.com/bogdanticu88/threatmap#stride-rule-coverage)
+[![MITRE](https://img.shields.io/badge/MITRE%20ATT%26CK-11%20rules-ef4444)](https://github.com/bogdanticu88/threatmap#threat-modeling-frameworks)
+[![PASTA](https://img.shields.io/badge/PASTA-12%20rules-8b5cf6)](https://github.com/bogdanticu88/threatmap#threat-modeling-frameworks)
+[![GraphQL API](https://img.shields.io/badge/GraphQL-API-e535ab?logo=graphql&logoColor=white)](https://github.com/bogdanticu88/threatmap#quick-start)
+[![License: MIT](https://img.shields.io/badge/license-MIT-10b981)](LICENSE)
+[![Offline](https://img.shields.io/badge/offline-no%20network%20calls-9ca3af)](https://github.com/bogdanticu88/threatmap)
 
 Static IaC threat modeler that parses Terraform, CloudFormation, and Kubernetes manifests and produces structured threat model reports using STRIDE, MITRE ATT&CK, or PASTA frameworks. No network calls, no cloud credentials, fully offline. Runs as a CLI, REST API, or containerized service.
 
