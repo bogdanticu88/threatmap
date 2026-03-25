@@ -131,7 +131,7 @@ def _count_by_severity(threats: List[Threat]) -> dict:
 @click.version_option(__version__)
 @click.pass_context
 def cli(ctx):
-    """threatmap — static IaC threat modeler using STRIDE."""
+    """threatmap — static IaC threat modeler using STRIDE, MITRE, and PASTA."""
     if ctx.invoked_subcommand is None:
         _print_banner()
         click.echo(ctx.get_help())
