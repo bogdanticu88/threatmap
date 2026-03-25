@@ -17,6 +17,7 @@ from threatmap.models.resource import Resource
 from threatmap.models.threat import Severity, Threat
 from threatmap.parsers import cloudformation, kubernetes, terraform
 from threatmap.reporters import html_reporter, json_reporter, markdown, sarif_reporter
+from threatmap import api
 
 console = Console(stderr=True)
 
@@ -147,6 +148,13 @@ def cli(ctx):
     help="Output format.",
 )
 @click.option(
+    "--framework",
+    type=click.Choice(["stride", "mitre", "pasta"], case_sensitive=False),
+    default="stride",
+    show_default=True,
+    help="Threat modeling framework.",
+)
+@click.option(
     "--output", "-o",
     type=click.Path(),
     default=None,
@@ -179,6 +187,7 @@ def cli(ctx):
 def scan(
     paths: Tuple[str, ...],
     output_format: str,
+    framework: str,
     output: Optional[str],
     fail_on: Optional[str],
     summary: bool,
@@ -186,8 +195,9 @@ def scan(
     no_color: bool,
 ) -> None:
     """
-    Scan IaC files or directories for STRIDE threats.
+    Scan IaC files or directories for infrastructure threats.
 
+    Supports STRIDE, MITRE ATT&CK, and PASTA frameworks.
     PATHS can be files or directories; multiple values accepted.
     """
     _print_banner(no_color)
@@ -216,8 +226,9 @@ def scan(
     stderr.print(f"Found [bold]{len(resources)}[/bold] resources.")
 
     # 2. Analyze
-    with stderr.status("[bold]Running STRIDE analysis…"):
-        threats = engine.run(resources)
+    framework_display = framework.upper()
+    with stderr.status(f"[bold]Running {framework_display} analysis…"):
+        threats = engine.run(resources, framework=framework.lower())
 
     counts = _count_by_severity(threats)
     stderr.print(
@@ -265,6 +276,44 @@ def scan(
                 sys.exit(1)
 
     sys.exit(0)
+
+
+@cli.command()
+@click.option(
+    "--host",
+    type=str,
+    default="127.0.0.1",
+    show_default=True,
+    help="Bind API server to this host.",
+)
+@click.option(
+    "--port",
+    type=int,
+    default=8000,
+    show_default=True,
+    help="Bind API server to this port.",
+)
+@click.option(
+    "--reload",
+    is_flag=True,
+    default=False,
+    help="Enable auto-reload on code changes (development only).",
+)
+def serve(host: str, port: int, reload: bool) -> None:
+    """Start REST API server."""
+    import uvicorn
+
+    stderr = Console(stderr=True)
+    stderr.print(f"[bold]Starting threatmap API server on {host}:{port}[/bold]")
+    stderr.print(f"[dim]API docs available at http://{host}:{port}/docs[/dim]\n")
+
+    uvicorn.run(
+        api.app,
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info"
+    )
 
 
 def main():

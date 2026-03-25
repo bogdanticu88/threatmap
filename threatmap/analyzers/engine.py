@@ -85,15 +85,22 @@ def _analyze_attack_paths(resources: List[Resource]) -> List[Threat]:
     return threats
 
 
-def run(resources: List[Resource]) -> List[Threat]:
+def run(resources: List[Resource], framework: str = "stride") -> List[Threat]:
     """
     Run all analyzers, custom rules, and graph analysis.
     Assign sequential threat IDs and sort by severity.
+
+    Args:
+        resources: List of infrastructure resources to analyze
+        framework: Threat modeling framework (stride, mitre, pasta)
     """
+    if framework not in ["stride", "mitre", "pasta"]:
+        raise ValueError(f"Invalid framework: {framework}. Use stride, mitre, or pasta.")
+
     all_threats: List[Threat] = []
     seen = set()
 
-    # 1. Built-in Analyzers
+    # 1. Built-in Analyzers (currently STRIDE only)
     for fn in ANALYZERS:
         for t in fn(resources):
             key = (t.stride_category, t.resource_name, t.trigger_property)
