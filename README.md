@@ -8,7 +8,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Offline](https://img.shields.io/badge/offline-no%20network%20calls-lightgrey)](https://github.com/bogdanticu88/threatmap)
 
-Static IaC threat modeler that parses Terraform, CloudFormation, and Kubernetes manifests and produces a structured STRIDE threat model report with a data flow diagram. No network calls, no cloud credentials, fully offline.
+Static IaC threat modeler that parses Terraform, CloudFormation, and Kubernetes manifests and produces structured threat model reports using STRIDE, MITRE ATT&CK, or PASTA frameworks. No network calls, no cloud credentials, fully offline. Runs as a CLI, REST API, or containerized service.
 
 
 
@@ -16,12 +16,23 @@ Static IaC threat modeler that parses Terraform, CloudFormation, and Kubernetes 
 
 ## Quick Start
 
+**CLI:**
 ```bash
 pip install threatmap
-# Run as a command
 threatmap scan ./examples --output report.md --fail-on HIGH
-# Or as a module
-python -m threatmap scan ./examples --ascii
+```
+
+**Docker:**
+```bash
+docker run -v $(pwd):/workspace threatmap:2.0.0 threatmap scan /workspace --output /workspace/report.md
+```
+
+**API Server:**
+```bash
+threatmap serve --host 0.0.0.0 --port 8000
+# Or via Docker:
+docker run -p 8000:8000 threatmap:2.0.0
+# Then POST to http://localhost:8000/analyze with IaC content
 ```
 
 ---
@@ -92,6 +103,39 @@ Use ASCII-only severity indicators (no emojis) for environments that don't suppo
 ```bash
 threatmap scan ./infra/ --ascii --output report.md
 ```
+
+Analyze using different threat modeling frameworks:
+
+```bash
+# STRIDE (default)
+threatmap scan ./infra/ --framework stride
+
+# MITRE ATT&CK (maps to tactics and techniques)
+threatmap scan ./infra/ --framework mitre --format json
+
+# PASTA (asset-centric threat modeling)
+threatmap scan ./infra/ --framework pasta --format json
+```
+
+---
+
+## Threat Modeling Frameworks
+
+**STRIDE** (default)
+- Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege
+- Threat-centric approach ideal for identifying attack surface
+- Best for: Traditional threat modeling, security architecture reviews
+
+**MITRE ATT&CK**
+- Maps infrastructure threats to real-world adversary tactics and techniques
+- Includes 14 tactics (Reconnaissance, Initial Access, Persistence, etc.)
+- Best for: Aligning with threat intelligence, incident response planning
+
+**PASTA**
+- Process for Attack Simulation and Threat Analysis
+- Asset-centric approach focusing on what needs protection
+- Classifies assets by type (data, identity, compute, network)
+- Best for: Risk-based prioritization, asset protection strategies
 
 ---
 
