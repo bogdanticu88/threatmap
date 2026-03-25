@@ -615,7 +615,8 @@ class TestGraphQL:
 
     def test_analyze_mutation_stride(self):
         tf_content = 'resource "aws_s3_bucket" "b" { bucket = "test" }'
-        query = f'mutation {{ analyze(content: "{tf_content.replace('"', '\\"')}", filename: "test.tf", framework: "stride") {{ framework threatCount threats {{ threatId }} }} }}'
+        escaped_content = tf_content.replace('"', '\\"')
+        query = f'mutation {{ analyze(content: "{escaped_content}", filename: "test.tf", framework: "stride") {{ framework threatCount threats {{ threatId }} }} }}'
         response = self.client.post("/graphql", json={"query": query})
         assert response.status_code == 200
 
