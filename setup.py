@@ -25,6 +25,7 @@ setup(
         "dev": [
             "pytest>=7.4.0",
             "pytest-cov>=4.1.0",
+            "httpx>=0.24.0",
         ]
     },
     entry_points={
