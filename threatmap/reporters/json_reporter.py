@@ -2,7 +2,7 @@
 JSON threat model report generator.
 """
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from threatmap import __version__
@@ -22,7 +22,7 @@ def build_report(
 ) -> str:
     report = {
         "meta": {
-            "generated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "source": source_path,
             "tool": "threatmap",
             "version": __version__,
