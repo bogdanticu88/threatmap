@@ -1,7 +1,7 @@
 """
 Interactive HTML + Mermaid threat model report generator.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 from jinja2 import Environment
@@ -114,7 +114,7 @@ def build_report(resources: List[Resource], threats: List[Threat], source_path: 
     template = env.from_string(_HTML_TEMPLATE)
 
     return template.render(
-        generated=datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+        generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         source=source_path,
         version=__version__,
         counts=counts,

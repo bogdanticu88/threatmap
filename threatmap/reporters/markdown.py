@@ -3,7 +3,7 @@ Markdown + Mermaid threat model report generator.
 """
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List
 
 from jinja2 import Environment
@@ -311,7 +311,7 @@ def build_report(
     template = env.from_string(_TEMPLATE)
 
     return template.render(
-        generated=datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+        generated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         source=source_path,
         resource_count=len(resources),
         formats=formats_str,
