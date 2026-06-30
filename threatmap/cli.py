@@ -316,7 +316,25 @@ def serve(host: str, port: int, reload: bool) -> None:
     )
 
 
+def _force_utf8_output() -> None:
+    """
+    Ensure stdout/stderr can encode the report's emoji, arrows, and em-dashes.
+
+    On Windows the console defaults to a legacy code page (cp1252/cp850) that
+    cannot encode the severity emoji or characters like '→'/'—', so printing a
+    report straight to the terminal raises UnicodeEncodeError. Reconfiguring the
+    streams to UTF-8 is a no-op when they are already UTF-8.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            # Stream was replaced (e.g. test capture) or cannot be reconfigured.
+            pass
+
+
 def main():
+    _force_utf8_output()
     cli(obj={})
 
 
